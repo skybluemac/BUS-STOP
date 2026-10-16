@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>自宅前バス接近</title>
+<style>:root{color-scheme:light}body{margin:0}</style>
+<style>
+/* Layout: 1-column stack of stop cards, each with one large tap target; built for one-thumb use after an NFC tap */
+:root{
+  --bg:#eef3f6; --card:#ffffff; --fg:#14232e; --muted:#5b6d79;
+  --accent:#0b6e8a; --accent-fg:#ffffff; --line:#d3dde4;
+  --font-body:"Noto Sans JP","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --font-num:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1a22; --card:#162630; --fg:#e8f0f4; --muted:#92a5b1; --accent:#4cc0df; --accent-fg:#06222c; --line:#27404e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1a22; --card:#162630; --fg:#e8f0f4; --muted:#92a5b1; --accent:#4cc0df; --accent-fg:#06222c; --line:#27404e; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);
+  padding-block:20px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+h1{font-size:20px;margin:0;text-wrap:balance}
+#clock{font-family:var(--font-num);font-size:20px;font-variant-numeric:tabular-nums;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card h2{margin:0;font-size:17px}
+.meta{font-family:var(--font-num);font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.btn{display:block;text-align:center;text-decoration:none;font-weight:700;font-size:17px;padding:16px;border-radius:8px;background:var(--accent);color:var(--accent-fg)}
+.btn:focus-visible,input:focus-visible,button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+.name{font:inherit;font-size:17px;font-weight:700;color:var(--fg);background:transparent;border:0;border-bottom:1px dashed var(--line);padding:2px 0;width:100%}
+.hint{font-size:12px;color:var(--muted);margin:0;line-height:1.6}
+.all{background:transparent;color:var(--accent);border:2px solid var(--accent)}
+</style>
+</head>
+<body>
+<main>
+  <header><h1>自宅前バス接近</h1><span id="clock" aria-label="現在時刻">--:--</span></header>
+  <div id="list" style="display:flex;flex-direction:column;gap:14px"></div>
+  <button class="btn all" id="openAll" type="button">すべての接近情報を順に開く</button>
+  <p class="hint">ボタンを押すと、その時点の接近情報(バスロケ)が開きます。停留所名は上の文字をタップして変更できます(この端末に保存)。</p>
+</main>
+<script>
+var BASE="https://transfer-cloud.navitime.biz/5931bus/approachings";
+var STOPS=[
+  {id:"a",dep:"00020330",pole:"000000000804",name:"志村一里塚｜池袋方面"},
+  {id:"b",dep:"00020352",pole:"000000000858",name:"小豆沢一丁目｜赤羽方面"}
+];
+function url(s){return BASE+"?departure-busstop="+s.dep+"&pole="+s.pole}
+function load(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function save(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+var list=document.getElementById("list");
+STOPS.forEach(function(s){
+  var saved=load("busname2-"+s.id); if(saved) s.name=saved;
+  var c=document.createElement("section"); c.className="card";
+  var i=document.createElement("input"); i.className="name"; i.id="name-"+s.id; i.value=s.name; i.setAttribute("aria-label","停留所名");
+  i.addEventListener("input",function(){s.name=i.value;save("busname2-"+s.id,i.value)});
+  var m=document.createElement("div"); m.className="meta"; m.textContent="busstop "+s.dep+" / pole "+s.pole;
+  var a=document.createElement("a"); a.className="btn"; a.href=url(s); a.target="_blank"; a.rel="noopener"; a.textContent="接近情報を見る";
+  c.append(i,m,a); list.append(c);
+});
+document.getElementById("openAll").addEventListener("click",function(){
+  STOPS.forEach(function(s){window.open(url(s),"_blank","noopener")});
+});
+function tick(){var d=new Date();document.getElementById("clock").textContent=("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)}
+tick();setInterval(tick,15000);
+</script>
+
+</body>
+</html>
